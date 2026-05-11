@@ -1,0 +1,107 @@
+<!-- Main UI for FileBound Batch Export tool.
+Includes login, project selection, file upload,
+batch processing trigger, and output display. -->
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Filebound Batch Export</title>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script> <!-- para lo de pdf-->
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script> <!-- para documentos tiff-->
+
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+
+<link rel="shortcut icon" href=""> <!--PA QUITAR EL ERROR DE FAVICO.ICO jajsj-->
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+
+    <div class="navbar-left">
+        <b>Filebound Batch Export</b>
+    </div>
+
+    <div class="navbar-right">
+        <button id="loadBtn">Login</button>
+        <button id="showTokenBtn">Show Stored Login</button>
+        <button id="clearBtn">Logout</button>
+    </div>
+
+</div>
+
+<div class="container">
+
+    <h2></h2>
+
+    <div class="subtitle">
+        Select project and process batch entries
+    </div>
+
+    <!-- TOP ROW (2 COLUMNS) -->
+    <div class="top-row">
+
+        <!-- PROJECT SELECT -->
+        <div class="card">
+            <label for="projectSelect"><b>Select Project</b></label>
+            <br><br>
+
+            <select id="projectSelect">
+                <option value="1">US  - Custom Compliance - Imports</option>
+                <option value="13">Oakley - Customs Compliance - Imports</option>
+            </select>
+        </div>
+
+        <!-- FILE UPLOAD -->
+        <div class="card">
+            <div class="file-wrapper">
+                <input type="file" id="entryFile" accept=".txt">
+                <label for="entryFile" class="file-button">
+                    Choose File
+                </label>
+
+                <span id="fileName">No file selected</span>
+            </div>
+
+            <br>
+
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button id="groupsBtn">Search Entry File</button>
+
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="checkbox" id="zipToggle">
+                    Zip download?
+                </label>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- TIMERrrr pa ver cuanto dura, chance lo quito -->
+    <div id="timer" class="timer">
+        ⏱ Time: 0m 0s
+    </div>
+
+    <!-- OUTPUT -->
+    <div id="output">Waiting...</div>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="{% static 'global/key.js' %}"></script>
+<script src="{% static 'Auth/login.js' %}"></script>
+<script type="module" src="{% static 'js/files/main.js' %}"></script>
+<script src="{% static 'js/app_demo.js' %}"></script>
+
+</body>
+</html>
