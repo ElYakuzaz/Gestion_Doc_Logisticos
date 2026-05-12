@@ -20,6 +20,17 @@ body {
     color: var(--text);
 }
 
+/*  ================================
+    LOGIN
+===================================*/ 
+.logged-badge{
+    margin-left:10px;
+    padding:4px 10px;
+    border-radius:20px;
+    background:#2f855a;
+    color:white;
+    font-size:12px;
+}
 /* =========================
    NAVBAR
 ========================= */

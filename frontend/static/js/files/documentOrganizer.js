@@ -3,36 +3,42 @@
 // Example:
 // documents/document_7501.pdf
 // documents/document_COMMERCIAL_INVOICE.pdf
-//
-// HICE PRUEBAS CON; AEK03391942 <=====
 // ------------------------------------------------------------------------------------------------------------
 
 import { imageToPdfBlob } from "./pdf.js";
+import { setEntryProgress } from "./status.js";
 
 /**
  * Generates grouped merged PDFs by document type
  * @param {Object} folder
  * @param {Array} documents
  * @param {Function} getDocumentBinary
+ * @param {string} entry
+ * @param {string} entryId
  */
 export async function generateGroupedDocuments(
     folder,
     documents,
-    getDocumentBinary
+    getDocumentBinary,
+    entry,
+    entryId
 ) {
+
+    let processedDocs = 0;
+    const totalDocs = documents.length;
 
     const grouped = {};
 
     // Group documents by divider/type
     for (const doc of documents) {
 
-        const rawType =
-            doc.divider ||
-            "UNKNOWN";
+        const rawType = doc.divider || "UNKNOWN";
 
-        const type = rawType
+        const cleanType = rawType
             .replace(/\s+/g, "_")
             .replace(/[^a-zA-Z0-9_]/g, "");
+
+        const type = cleanType;
 
         if (!grouped[type]) {
             grouped[type] = [];
@@ -42,7 +48,10 @@ export async function generateGroupedDocuments(
     }
 
     // Create documents folder
-    const docsFolder = folder.folder("documents");
+    // const docsFolder = folder.folder("documents");
+
+    // Save directly in ZIP root
+    const docsFolder = folder;
 
     // Process each document type
     for (const type in grouped) {
@@ -62,6 +71,18 @@ export async function generateGroupedDocuments(
                 doc.documentId ||
                 doc.DocumentId;
 
+            processedDocs++;
+
+            // Update UI progress
+            setEntryProgress(
+                entryId,
+                entry,
+                "MERGING",
+                processedDocs,
+                totalDocs,
+                documentId
+            );
+
             console.log(
                 `Generating grouped PDF: ${type} -> ${documentId}`
             );
@@ -70,7 +91,7 @@ export async function generateGroupedDocuments(
             const imageBlob =
                 await getDocumentBinary(documentId);
 
-            // Convert to PDF
+            // Convert image to PDF
             const pdfBlob =
                 await imageToPdfBlob(imageBlob);
 
@@ -98,8 +119,9 @@ export async function generateGroupedDocuments(
         const finalPdfBytes =
             await mergedPdf.save();
 
+        // Final file naming: ENTRY + TYPE
         docsFolder.file(
-            `document_${type}.pdf`,
+            `${entry}_${type}.pdf`,
             finalPdfBytes
         );
     }
