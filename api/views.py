@@ -3,6 +3,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import os
+import zipfile
+import shutil
 
 JSON_PATH = os.path.join(settings.BASE_DIR, "entries.json")
 
@@ -22,31 +24,33 @@ def save_data(data):
 
 @csrf_exempt
 def mark_entry(request):
+
     if request.method == "POST":
 
         body = json.loads(request.body)
 
         entry = body.get("entry")
         project = body.get("project")   # "US" or "Oakley"
-        status = body.get("status")     # True / False
+        status = body.get("status")
 
         data = load_data()
 
+        # create entry if not exists
         if entry not in data:
             data[entry] = {
                 "US": None,
                 "Oakley": None
             }
 
-        # ensure keys exist but DO NOT force false
-        if "US" not in data[entry]:
-            data[entry]["US"] = None
+        # determine opposite project
+        other_project = "Oakley" if project == "US" else "US"
 
-        if "Oakley" not in data[entry]:
-            data[entry]["Oakley"] = None
-
-        # only update current project
+        # update current project
         data[entry][project] = status
+
+        # if success -> opposite becomes false
+        if status is True:
+            data[entry][other_project] = False
 
         save_data(data)
 
@@ -90,3 +94,73 @@ def check_entry_all(request):
             "US": entry_data.get("US", None),
             "Oakley": entry_data.get("Oakley", None)
         })
+
+# -------------------------------- 
+# SAVE ZIP TO DIRECTORY WANTED
+@csrf_exempt
+def save_zip(request):
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    uploaded_file = request.FILES.get("file")
+    entry = request.POST.get("entry")
+
+    if not uploaded_file:
+        return JsonResponse({"error": "No file received"}, status=400)
+
+    if not entry:
+        return JsonResponse({"error": "No entry provided"}, status=400)
+
+    base_directory = r"C:\Users\SamonteMJ\Documents\.backup\zipBackUp"
+
+    save_directory = os.path.join(base_directory, entry)
+    os.makedirs(save_directory, exist_ok=True)
+
+    # 🔥 CLEAN SAFE FILE NAME (IMPORTANT)
+    zip_name = os.path.basename(uploaded_file.name)
+
+    zip_path = os.path.join(base_directory, zip_name)
+
+    try:
+
+        # SAVE ZIP
+        with open(zip_path, "wb+") as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+        # EXTRACT ZIP
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+
+            for member in zip_ref.infolist():
+
+                if member.is_dir():
+                    continue
+
+                parts = member.filename.split("/")
+
+                if len(parts) > 1:
+                    parts = parts[1:]
+
+                relative_path = "/".join(parts)
+
+                target_path = os.path.join(save_directory, relative_path)
+
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+
+                with zip_ref.open(member) as source, open(target_path, "wb") as target:
+                    shutil.copyfileobj(source, target)
+
+        return JsonResponse({
+            "success": True,
+            "entry_folder": save_directory
+        })
+
+    finally:
+        # 🧹 FORCE DELETE (ALWAYS RUNS)
+        if os.path.exists(zip_path):
+            try:
+                os.remove(zip_path)
+                print(f"Deleted ZIP: {zip_path}")
+            except Exception as e:
+                print(f"Failed to delete ZIP: {e}")

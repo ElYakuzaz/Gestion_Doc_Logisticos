@@ -16,3 +16,6 @@ py manage.py startapp app
 
 -- api de filebound
 https://luxatl.filebound.com/api/documentation#authentication-topic
+
+----DEPENDENCIES
+pip install pillow fpdf2 requests

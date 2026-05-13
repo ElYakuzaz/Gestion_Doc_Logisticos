@@ -23,7 +23,6 @@ export async function generateGroupedDocuments(
     entry,
     entryId
 ) {
-
     let processedDocs = 0;
     const totalDocs = documents.length;
 
@@ -63,7 +62,7 @@ export async function generateGroupedDocuments(
 
         // Create merged PDF
         const mergedPdf = await PDFLib.PDFDocument.create();
-
+        console.log(`Generating document: ${type}`)
         // Loop documents in correct order
         for (const doc of grouped[type]) {
 
@@ -83,9 +82,9 @@ export async function generateGroupedDocuments(
                 documentId
             );
 
-            console.log(
-                `Generating grouped PDF: ${type} -> ${documentId}`
-            );
+            // console.log(
+            //     `Generating grouped PDF: ${type} --> ${documentId}`
+            // );
 
             // Download original image
             const imageBlob =

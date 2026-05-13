@@ -1,22 +1,34 @@
-// ------------------------------------------------------------------------------------------------------------
-// Generates and downloads ZIP files for processed batches.
-// File name includes project name, batch index, and timestamp.
-// ------------------------------------------------------------------------------------------------------------
-
 import { selectedProjectName } from "./state.js";
 
-/**
- * Generates and downloads ZIP for a batch
- * @param {Object} batch
- */
+async function uploadZipToServer(blob, fileName, entry) {
+
+    const formData = new FormData();
+
+    formData.append("file", blob, fileName);
+    formData.append("entry", entry); 
+
+    const response = await fetch("/api/save-zip/", {
+        method: "POST",
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to upload ZIP");
+    }
+
+    return await response.json();
+}
+
 export async function autoDownloadBatch(batch) {
 
-    const content = await batch.zip.generateAsync({ type: "blob" });
+    const content = await batch.zip.generateAsync({
+        type: "blob"
+    });
 
     const now = new Date();
 
-    // Timestamo format
-    const pad = (n) => n.toString().padStart(2, "0");
+    const pad = (n) =>
+        n.toString().padStart(2, "0");
 
     const timestamp =
         now.getFullYear() + "-" +
@@ -26,13 +38,16 @@ export async function autoDownloadBatch(batch) {
         pad(now.getMinutes()) + "-" +
         pad(now.getSeconds());
 
-    let projectLabel = selectedProjectName || "UNKNOWN_PROJECT";
+    let projectLabel =
+        selectedProjectName || "UNKNOWN_PROJECT";
 
     projectLabel = projectLabel
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9_]/g, "");
 
-    const fileName = `${projectLabel}_Batch_${batch.batchIndex}_${timestamp}.zip`;
+    const fileName =
+        `${projectLabel}_Batch_${batch.batchIndex}_${timestamp}.zip`;
 
-    saveAs(content, fileName);
+    // SEND TO DJANGO INSTEAD OF DOWNLOAD
+    await uploadZipToServer(content, fileName, batch.entries[0].entry);
 }

@@ -29,6 +29,7 @@ $(document).ready(function () {
     // PROJECT KEY
     // ==============================
     function getProjectKey() {
+
         const text = $("#projectSelect option:selected").text();
 
         if (text.includes("US")) return "US";
@@ -41,12 +42,15 @@ $(document).ready(function () {
     // GET JSON STATUS
     // ==============================
     async function checkEntryStatus(entryId) {
+
         const res = await fetch("/api/check-entry-all/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ entry: entryId })
+            body: JSON.stringify({
+                entry: entryId
+            })
         });
 
         return await res.json();
@@ -56,6 +60,7 @@ $(document).ready(function () {
     // SAVE STATUS
     // ==============================
     async function markEntry(entryId, projectKey, status) {
+
         await fetch("/api/mark-entry/", {
             method: "POST",
             headers: {
@@ -78,6 +83,7 @@ $(document).ready(function () {
     );
 
     $("#projectSelect").on("change", function () {
+
         const id = $(this).val();
 
         const name = $("#projectSelect option:selected").text()
@@ -93,6 +99,7 @@ $(document).ready(function () {
     $("#groupsBtn").click(async function () {
 
         startTimer();
+
         const startTime = performance.now();
 
         const projectKey = getProjectKey();
@@ -102,6 +109,8 @@ $(document).ready(function () {
         try {
 
             const batches = await readEntryFile();
+            
+
             initPagination(batches);
 
             const allResults = [];
@@ -132,82 +141,171 @@ $(document).ready(function () {
                         // ==============================
                         // GET JSON STATUS
                         // ==============================
-                        const statusData = await checkEntryStatus(entryId) || {};
+                        const statusData =
+                            await checkEntryStatus(entryId) || {};
 
-                        const projectStatus = statusData?.[projectKey] ?? null;
+                        const projectStatus =
+                            statusData?.[projectKey] ?? null;
 
-                        const otherProjectKey = projectKey === "US" ? "Oakley" : "US";
-                        const otherStatus = statusData?.[otherProjectKey] ?? null;
+                        const otherProjectKey =
+                            projectKey === "US"
+                                ? "Oakley"
+                                : "US";
+
+                        const otherStatus =
+                            statusData?.[otherProjectKey] ?? null;
 
                         const entryExistsInJson =
                             statusData &&
-                            (statusData.US !== undefined || statusData.Oakley !== undefined);
+                            (
+                                statusData.US !== undefined ||
+                                statusData.Oakley !== undefined
+                            );
 
                         // ==============================
                         // ALREADY SUCCESS
                         // ==============================
                         if (projectStatus === true) {
+
                             setEntryDone(entryId);
                             continue;
                         }
 
                         // ==============================
-                        // ONLY BLOCK IF FAILED BEFORE
+                        // PREVIOUSLY FAILED
                         // ==============================
                         if (projectStatus === false) {
-                            setEntryError(entryId, "Previously failed download ❌");
+
+                            setEntryError(
+                                entryId,
+                                "Previously failed download ❌"
+                            );
+
                             continue;
                         }
 
                         // ==============================
                         // SEARCH API
                         // ==============================
-                        const searchResult = await searchByEntry(entry);
+                        const searchResult =
+                            await searchByEntry(entry);
 
-                        if (!searchResult || searchResult.length === 0) {
+                        if (
+                            !searchResult ||
+                            searchResult.length === 0
+                        ) {
 
                             if (entryExistsInJson) {
-                                setEntryError(entryId, "File exists but failed in this project");
+
+                                setEntryError(
+                                    entryId,
+                                    "File exists but failed in this project"
+                                );
+
                             } else {
-                                setEntryError(entryId, "No file in project");
+
+                                setEntryError(
+                                    entryId,
+                                    "No file in project"
+                                );
                             }
 
-                            await markEntry(entryId, projectKey, false);
+                            await markEntry(
+                                entryId,
+                                projectKey,
+                                false
+                            );
+
                             continue;
                         }
 
-                        const filteredResult = searchResult.filter(r => {
-                            const pid = String(r.projectId || r.ProjectId || "");
-                            return pid === $("#projectSelect").val();
-                        });
+                        // ==============================
+                        // FILTER PROJECT
+                        // ==============================
+                        const filteredResult =
+                            searchResult.filter(r => {
+
+                                const pid =
+                                    String(
+                                        r.projectId ||
+                                        r.ProjectId ||
+                                        ""
+                                    );
+
+                                return pid ===
+                                    $("#projectSelect").val();
+                            });
 
                         if (filteredResult.length === 0) {
 
                             if (entryExistsInJson) {
-                                setEntryError(entryId, "File exists but failed in this project");
+
+                                setEntryError(
+                                    entryId,
+                                    "File exists but failed in this project"
+                                );
+
                             } else {
-                                setEntryError(entryId, "No file in project");
+
+                                setEntryError(
+                                    entryId,
+                                    "No file in project"
+                                );
                             }
 
-                            await markEntry(entryId, projectKey, false);
+                            await markEntry(
+                                entryId,
+                                projectKey,
+                                false
+                            );
+
                             continue;
                         }
 
+                        // ==============================
+                        // FILE INFO
+                        // ==============================
                         const fileId =
                             filteredResult[0].fileId ||
                             filteredResult[0].FileId;
 
-                        setEntryStage(entryId, `FileID: ${fileId}`);
+                        setEntryStage(
+                            entryId,
+                            `FileID: ${fileId}`
+                        );
 
-                        const documents = await getDocumentsByFile(fileId);
+                        const documents =
+                            await getDocumentsByFile(fileId);
+                        
+                        console.log("=================================");
+                        console.log(`ENTRY: ${entry}`);
+                        console.log(`FILE ID: ${fileId}`);
+                        console.log(`TOTAL DOCUMENTS: ${documents.length}`);
+                        console.table(
+                            documents.map(d => ({
+                                documentId: d.documentId || d.DocumentId,
+                                divider: d.divider,
+                                sortOrder: d.sortOrder
+                            }))
+                        );
 
-                        setEntryStage(entryId, `Documents: ${documents.length}`);
+                        setEntryStage(
+                            entryId,
+                            `Documents: ${documents.length}`
+                        );
 
                         const folder = zip.folder(entry);
 
                         let docsList = [];
 
-                        for (let i = 0; i < documents.length; i++) {
+                        // ==============================
+                        // DOCUMENT LOOP
+                        // ==============================
+                        for (
+                            let i = 0;
+                            i < documents.length;
+                            i++
+                        ) {
 
                             const doc = documents[i];
 
@@ -224,9 +322,14 @@ $(document).ready(function () {
                                 documentId
                             );
 
-                            docsList.push({ documentId });
+                            docsList.push({
+                                documentId
+                            });
                         }
 
+                        // ==============================
+                        // GENERATE PDFs
+                        // ==============================
                         await generateGroupedDocuments(
                             folder,
                             documents,
@@ -243,21 +346,41 @@ $(document).ready(function () {
 
                         setEntryDone(entryId);
 
-                        await markEntry(entryId, projectKey, true);
-
                         processedCount++;
 
                         // ==============================
                         // ZIP EVERY 2 ENTRIES
                         // ==============================
-                        if (processedCount % 2 === 0) {
+                        if (processedCount % 1 === 0) {
 
                             allResults.push(batchResult);
 
-                            const shouldZip = $("#zipToggle").is(":checked");
+                            const shouldZip =
+                                $("#zipToggle").is(":checked");
 
                             if (shouldZip) {
-                                await autoDownloadBatch(batchResult);
+
+                                // ==============================
+                                // DOWNLOAD ZIP
+                                // ==============================
+                                await autoDownloadBatch(
+                                    batchResult
+                                );
+
+                                // ==============================
+                                // SAVE SUCCESS AFTER DOWNLOAD
+                                // ==============================
+                                for (
+                                    const zipEntry
+                                    of batchResult.entries
+                                ) {
+
+                                    await markEntry(
+                                        sanitize(zipEntry.entry),
+                                        projectKey,
+                                        true
+                                    );
+                                }
                             }
 
                             zipCounter++;
@@ -272,10 +395,36 @@ $(document).ready(function () {
                         }
 
                     } catch (err) {
-                        console.error(err);
-                        setEntryError(entryId, "Request failed");
 
-                        await markEntry(entryId, projectKey, false);
+                        console.error(err);
+
+                        // ==============================
+                        // PAGE REFRESH / TAB CLOSE
+                        // ==============================
+                        if (
+                            err.name === "AbortError" ||
+                            err.message?.includes("Failed to fetch")
+                        ) {
+
+                            setEntryError(
+                                entryId,
+                                "Process interrupted"
+                            );
+
+                            // IMPORTANT:
+                            // Do NOT save false in JSON
+                            continue;
+                        }
+                        setEntryError(
+                            entryId,
+                            "Request failed"
+                        );
+
+                        await markEntry(
+                            entryId,
+                            projectKey,
+                            false
+                        );
                     }
                 }
 
@@ -286,21 +435,50 @@ $(document).ready(function () {
 
                     allResults.push(batchResult);
 
-                    const shouldZip = $("#zipToggle").is(":checked");
+                    const shouldZip =
+                        $("#zipToggle").is(":checked");
 
                     if (shouldZip) {
+
+                        // ==============================
+                        // DOWNLOAD ZIP
+                        // ==============================
                         await autoDownloadBatch(batchResult);
+
+                        // ==============================
+                        // SAVE SUCCESS AFTER DOWNLOAD
+                        // ==============================
+                        for (
+                            const zipEntry
+                            of batchResult.entries
+                        ) {
+
+                            await markEntry(
+                                sanitize(zipEntry.entry),
+                                projectKey,
+                                true
+                            );
+                        }
                     }
                 }
             }
 
             const endTime = performance.now();
+
             stopTimer();
 
-            const durationMs = endTime - startTime;
+            const durationMs =
+                endTime - startTime;
 
-            const seconds = Math.floor((durationMs / 1000) % 60);
-            const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+            const seconds =
+                Math.floor(
+                    (durationMs / 1000) % 60
+                );
+
+            const minutes =
+                Math.floor(
+                    (durationMs / (1000 * 60)) % 60
+                );
 
             $("#output").append(
                 `<br><br>⏱ Finished in ${minutes} min ${seconds} sec`
@@ -309,9 +487,12 @@ $(document).ready(function () {
         } catch (err) {
 
             console.error(err);
+
             stopTimer();
 
-            $("#output").html("Error processing file.");
+            $("#output").html(
+                "Error processing file."
+            );
         }
     });
 
