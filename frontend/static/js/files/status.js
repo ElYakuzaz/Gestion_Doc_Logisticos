@@ -1,35 +1,64 @@
 // ------------------------------------------------------------------------------------------------------------
 // Updates entry status in UI (stage, progress, error, done).
-// Syncs DOM updates with internal state and triggers UI refresh.
+// Syncs DOM updates with internal state without full page refresh.
 // ------------------------------------------------------------------------------------------------------------
 
 import { updateEntryState } from "./entryState.js";
-import { refreshPagination } from "./paginacion.js";
 
-let refreshTimeout;
+// Store pending updates to batch them
+let pendingUpdates = new Map();
+let updateScheduled = false;
 
-// Debounced UI refresh to avoid excessive re-rendering
-function safeRefresh() {
-    clearTimeout(refreshTimeout);
-
-    refreshTimeout = setTimeout(() => {
-        refreshPagination();
-    }, 100);
+// Direct DOM update without pagination refresh
+function updateDOMDirect(id, html, rawStatus) {
+    // Find the status element for this specific entry
+    const statusEl = $(`#entry-${id} .status`);
+    
+    if (statusEl.length) {
+        // Update just this entry's status without touching anything else
+        statusEl.html(html);
+    }
+    
+    // Update memory state
+    updateEntryState(id, rawStatus, true); // skip UI update to avoid recursion
 }
 
-// Updates DOM + internal state for an entry
-function updateDOM(id, html, rawStatus) {
-    const el = $(`#entry-${id} .status`);
-
-    if (el.length) {
-        el.html(html);
+// Batch multiple updates that happen in the same frame
+function scheduleUpdate(id, html, rawStatus) {
+    pendingUpdates.set(id, { html, rawStatus });
+    
+    if (!updateScheduled) {
+        updateScheduled = true;
+        requestAnimationFrame(() => {
+            // Apply all pending updates at once
+            for (const [entryId, data] of pendingUpdates) {
+                const statusEl = $(`#entry-${entryId} .status`);
+                if (statusEl.length) {
+                    statusEl.html(data.html);
+                }
+                updateEntryState(entryId, data.rawStatus, true);
+            }
+            pendingUpdates.clear();
+            updateScheduled = false;
+        });
     }
+}
 
-    // guardar estado en memoria
-    updateEntryState(id, rawStatus);
-
-    // refresh controlado (NO spam render)
-    safeRefresh();
+// Updates DOM + internal state for an entry (optimized)
+function updateDOM(id, html, rawStatus) {
+    // Direct update without any pagination refresh
+    // This preserves hover states because we're not replacing parent elements
+    const statusEl = $(`#entry-${id} .status`);
+    
+    if (statusEl.length) {
+        statusEl.html(html);
+    } else {
+        // If element doesn't exist yet, use the scheduled approach
+        scheduleUpdate(id, html, rawStatus);
+    }
+    
+    // Update memory state (skip UI refresh to prevent loops)
+    updateEntryState(id, rawStatus, true);
 }
 
 // Sets a simple stage message (e.g. "Searching...")
@@ -70,4 +99,12 @@ export function setEntryDone(id) {
     updateDOM(id, `<div style="color:#22c55e;">Completed ✔</div>`, {
         type: "done"
     });
+}
+
+// Optional: Force a full refresh only when needed (e.g., page change)
+export function forceFullRefresh() {
+    // This would only be called when changing pages, not during updates
+    if (typeof refreshPagination !== 'undefined') {
+        refreshPagination();
+    }
 }

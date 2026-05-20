@@ -1,6 +1,9 @@
-<!-- Main UI for FileBound Batch Export tool.
-Includes login, project selection, file upload,
-batch processing trigger, and output display. -->
+<!-- 
+  Main UI for FileBound Batch Export tool.
+  Includes login, project selection, file upload,
+  batch processing trigger, and output display.
+  Updated with modern sharp UI structure.
+-->
 
 {% load static %}
 
@@ -8,96 +11,109 @@ batch processing trigger, and output display. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Filebound Batch Export</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FileBound Batch Export | Sharp Export Tool</title>
 
+<!-- Google Fonts + Inter Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+
+<!-- Libraries -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script> <!-- para lo de pdf-->
-<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script> <!-- para documentos tiff-->
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
 
 <link rel="stylesheet" href="{% static 'css/index.css' %}">
-
-<link rel="shortcut icon" href=""> <!--PA QUITAR EL ERROR DE FAVICO.ICO jajsj-->
+<link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3C/svg%3E">
 </head>
-
 <body>
 
-<!-- NAVBAR -->
+<!-- Modern dark navbar with sharp edges -->
 <div class="navbar">
-
     <div class="navbar-left">
-        <b>Filebound Batch Export</b>
+        <b>FileBound Batch Export</b>
     </div>
-
     <div class="navbar-right">
-        <button id="loadBtn">Login</button>
-        {% comment %} <button id="showTokenBtn">Show Stored Login</button> {% endcomment %}
-        <button id="clearBtn">Logout</button>
+        <button id="loadBtn" aria-label="Login to your account">Login</button>
+        <button id="clearBtn" aria-label="Logout from current session">Logout</button>
     </div>
-
 </div>
 
 <div class="container">
-
-    <h2></h2>
-
+    <h2>Batch Processing Dashboard</h2>
     <div class="subtitle">
-        Select project and process batch entries
+        Select your project and upload entry file to begin batch export
     </div>
 
-    <!-- TOP ROW (2 COLUMNS) -->
+    <!-- TOP ROW - Two cards side by side -->
     <div class="top-row">
-
-        <!-- PROJECT SELECT -->
+        <!-- PROJECT SELECT CARD -->
         <div class="card">
-            <label for="projectSelect"><b>Select Project</b></label>
+            <label>Select Project</label>
             <br><br>
-
             <select id="projectSelect">
-                <option value="1">US  - Custom Compliance - Imports</option>
+                <option value="1">US - Custom Compliance - Imports</option>
                 <option value="13">Oakley - Customs Compliance - Imports</option>
             </select>
+            <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                Active project will be used for batch processing
+            </div>
         </div>
 
-        <!-- FILE UPLOAD -->
+        <!-- ENTRY FILE + FOLDER DATE CARD (combined) -->
         <div class="card">
-            <div class="file-wrapper">
-                <input type="file" id="entryFile" accept=".txt">
-                <label for="entryFile" class="file-button">
-                    Choose File
-                </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Left side: File Upload -->
+                <div>
+                    <label>Entry File</label>
+                    <div class="file-wrapper" style="margin-top: 12px;">
+                        <input type="file" id="entryFile" accept=".txt">
+                        <label for="entryFile" class="file-button">
+                            Choose File
+                        </label>
+                        <span id="fileName">No file selected</span>
+                    </div>
+                </div>
 
-                <span id="fileName">No file selected</span>
+                <!-- Right side: Folder Date -->
+                <div>
+                    <label>Folder Date</label>
+                    <input
+                        type="date"
+                        id="folderDate"
+                        style="margin-top: 12px; width: 100%;cursor: pointer;"
+                    >
+                </div>
             </div>
 
-            <br>
+            <!-- Action buttons row -->
+            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light);">
+                <button id="groupsBtn" aria-label="Start batch search">Search Entry File</button>
 
-            <div style="display:flex; align-items:center; gap:15px;">
-                <button id="groupsBtn">Search Entry File</button>
-
-                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                    <input type="checkbox" id="zipToggle">
-                    Zip download?
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="zipToggle" checked>
+                    <span>Zip download?</span>
                 </label>
             </div>
         </div>
-
     </div>
-    
-    <!-- TIMERrrr pa ver cuanto dura, chance lo quito -->
+
+    <!-- TIMER DISPLAY -->
     <div id="timer" class="timer">
-        ⏱ Time: 0m 0s
+        Time: 0m 0s
     </div>
 
-    <!-- OUTPUT -->
-    <div id="output">Waiting...</div>
-
+    <!-- OUTPUT SECTION with status -->
+    <div id="output" aria-live="polite">
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 150px; color: var(--text-muted);">
+            Ready to process — select a file and click Search
+        </div>
+    </div>
 </div>
 
-<!-- SCRIPTS -->
+<!-- Scripts -->
 <script src="{% static 'global/key.js' %}"></script>
 <script src="{% static 'Auth/login.js' %}"></script>
 <script type="module" src="{% static 'js/files/main.js' %}"></script>

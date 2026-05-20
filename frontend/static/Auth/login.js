@@ -36,8 +36,7 @@ function updateLoginUI() {
 
             $(".navbar-right").prepend(`
                 <span id="loggedText" 
-                    style="
-                        color:#7CFFB2;
+                    style=";
                         font-weight:500;
                         margin-right:10px;
                         margin-top:5.5px;

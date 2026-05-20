@@ -24,10 +24,9 @@ import { startTimer, stopTimer } from "./timer.js";
 import { generateGroupedDocuments } from "./documentOrganizer.js";
 
 $(document).ready(function () {
-
+    
     // ==============================
-    // PROJECT KEY
-    // ==============================
+    // PROJECT KEY 
     function getProjectKey() {
 
         const text = $("#projectSelect option:selected").text();
@@ -40,7 +39,6 @@ $(document).ready(function () {
 
     // ==============================
     // GET JSON STATUS
-    // ==============================
     async function checkEntryStatus(entryId) {
 
         const res = await fetch("/api/check-entry-all/", {
@@ -57,8 +55,7 @@ $(document).ready(function () {
     }
 
     // ==============================
-    // SAVE STATUS
-    // ==============================
+    // SAVE STATUS 
     async function markEntry(entryId, projectKey, status) {
 
         await fetch("/api/mark-entry/", {
@@ -75,8 +72,7 @@ $(document).ready(function () {
     }
 
     // ==============================
-    // INIT PROJECT
-    // ==============================
+    // INIT PROJECT 
     setProject(
         $("#projectSelect").val(),
         $("#projectSelect option:selected").text()
@@ -94,9 +90,16 @@ $(document).ready(function () {
     });
 
     // ==============================
-    // MAIN PROCESS
-    // ==============================
+    // MAIN PROCESS 
     $("#groupsBtn").click(async function () {
+        const folderDate = $("#folderDate").val();
+
+        // 🚨 HARD BLOCK (no date = stop EVERYTHING)
+        if (!folderDate) {
+            alert("Please select a folder date before searching.");
+            $("#folderDate").focus();
+            return;
+        }
 
         startTimer();
 
@@ -139,8 +142,7 @@ $(document).ready(function () {
                         setEntryStage(entryId, "Searching...");
 
                         // ==============================
-                        // GET JSON STATUS
-                        // ==============================
+                        // GET JSON STATUS 
                         const statusData =
                             await checkEntryStatus(entryId) || {};
 
@@ -163,8 +165,7 @@ $(document).ready(function () {
                             );
 
                         // ==============================
-                        // ALREADY SUCCESS
-                        // ==============================
+                        // ALREADY SUCCESS 
                         if (projectStatus === true) {
 
                             setEntryDone(entryId);
@@ -172,8 +173,7 @@ $(document).ready(function () {
                         }
 
                         // ==============================
-                        // PREVIOUSLY FAILED
-                        // ==============================
+                        // PREVIOUSLY FAILED 
                         if (projectStatus === false) {
 
                             setEntryError(
@@ -185,8 +185,7 @@ $(document).ready(function () {
                         }
 
                         // ==============================
-                        // SEARCH API
-                        // ==============================
+                        // SEARCH API 
                         const searchResult =
                             await searchByEntry(entry);
 
@@ -220,8 +219,7 @@ $(document).ready(function () {
                         }
 
                         // ==============================
-                        // FILTER PROJECT
-                        // ==============================
+                        // FILTER PROJECT 
                         const filteredResult =
                             searchResult.filter(r => {
 
@@ -263,8 +261,7 @@ $(document).ready(function () {
                         }
 
                         // ==============================
-                        // FILE INFO
-                        // ==============================
+                        // FILE INFO 
                         const fileId =
                             filteredResult[0].fileId ||
                             filteredResult[0].FileId;
@@ -299,8 +296,7 @@ $(document).ready(function () {
                         let docsList = [];
 
                         // ==============================
-                        // DOCUMENT LOOP
-                        // ==============================
+                        // DOCUMENT LOOP 
                         for (
                             let i = 0;
                             i < documents.length;
@@ -328,8 +324,7 @@ $(document).ready(function () {
                         }
 
                         // ==============================
-                        // GENERATE PDFs
-                        // ==============================
+                        // GENERATE PDFs 
                         await generateGroupedDocuments(
                             folder,
                             documents,
@@ -349,8 +344,7 @@ $(document).ready(function () {
                         processedCount++;
 
                         // ==============================
-                        // ZIP EVERY 2 ENTRIES
-                        // ==============================
+                        // ZIP EVERY 2 ENTRIES 
                         if (processedCount % 1 === 0) {
 
                             allResults.push(batchResult);
@@ -361,15 +355,13 @@ $(document).ready(function () {
                             if (shouldZip) {
 
                                 // ==============================
-                                // DOWNLOAD ZIP
-                                // ==============================
+                                // DOWNLOAD ZIP 
                                 await autoDownloadBatch(
                                     batchResult
                                 );
 
                                 // ==============================
-                                // SAVE SUCCESS AFTER DOWNLOAD
-                                // ==============================
+                                // SAVE SUCCESS AFTER DOWNLOAD 
                                 for (
                                     const zipEntry
                                     of batchResult.entries
@@ -399,8 +391,7 @@ $(document).ready(function () {
                         console.error(err);
 
                         // ==============================
-                        // PAGE REFRESH / TAB CLOSE
-                        // ==============================
+                        // PAGE REFRESH / TAB CLOSE 
                         if (
                             err.name === "AbortError" ||
                             err.message?.includes("Failed to fetch")
@@ -429,8 +420,7 @@ $(document).ready(function () {
                 }
 
                 // ==============================
-                // FINAL ZIP
-                // ==============================
+                // FINAL ZIP 
                 if (batchResult.entries.length > 0) {
 
                     allResults.push(batchResult);
@@ -441,13 +431,11 @@ $(document).ready(function () {
                     if (shouldZip) {
 
                         // ==============================
-                        // DOWNLOAD ZIP
-                        // ==============================
+                        // DOWNLOAD ZIP 
                         await autoDownloadBatch(batchResult);
 
                         // ==============================
-                        // SAVE SUCCESS AFTER DOWNLOAD
-                        // ==============================
+                        // SAVE SUCCESS AFTER DOWNLOAD 
                         for (
                             const zipEntry
                             of batchResult.entries
@@ -480,9 +468,9 @@ $(document).ready(function () {
                     (durationMs / (1000 * 60)) % 60
                 );
 
-            $("#output").append(
-                `<br><br>⏱ Finished in ${minutes} min ${seconds} sec`
-            );
+            // $("#output").append(
+            //     `<br><br>⏱ Finished in ${minutes} min ${seconds} sec`
+            // );
 
         } catch (err) {
 
@@ -497,8 +485,7 @@ $(document).ready(function () {
     });
 
     // ==============================
-    // FILE NAME DISPLAY
-    // ==============================
+    // FILE NAME DISPLAY 
     $("#entryFile").on("change", function () {
 
         const fileName =

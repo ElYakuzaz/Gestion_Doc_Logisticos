@@ -1,11 +1,16 @@
 import { selectedProjectName } from "./state.js";
+import { updateTransferStatusUI } from "./paginacion.js";
 
-async function uploadZipToServer(blob, fileName, entry) {
+async function uploadZipToServer(blob, fileName, entry, folderDate) {
 
     const formData = new FormData();
 
     formData.append("file", blob, fileName);
     formData.append("entry", entry); 
+    formData.append(
+        "folder_date",
+        folderDate
+    );
 
     const response = await fetch("/api/save-zip/", {
         method: "POST",
@@ -20,6 +25,18 @@ async function uploadZipToServer(blob, fileName, entry) {
 }
 
 export async function autoDownloadBatch(batch) {
+    const folderDate =
+            $("#folderDate").val();
+    // 🚨 FORCE REQUIREMENT
+    if (!folderDate) {
+        alert("You must select a folder date before processing");
+        throw new Error("Missing folder date");
+    }
+
+    // Show "Transferring..." status for all entries in this batch
+    for (const entryData of batch.entries) {
+        updateTransferStatusUI(entryData.entry, "transferring");
+    }
 
     const content = await batch.zip.generateAsync({
         type: "blob"
@@ -48,6 +65,24 @@ export async function autoDownloadBatch(batch) {
     const fileName =
         `${projectLabel}_Batch_${batch.batchIndex}_${timestamp}.zip`;
 
-    // SEND TO DJANGO INSTEAD OF DOWNLOAD
-    await uploadZipToServer(content, fileName, batch.entries[0].entry);
+    try {
+        // SEND TO DJANGO INSTEAD OF DOWNLOAD
+        await uploadZipToServer(
+            content,
+            fileName,
+            batch.entries[0].entry,
+            folderDate 
+        );
+
+        // Show "Transferred ✓" status for all entries in this batch
+        for (const entryData of batch.entries) {
+            updateTransferStatusUI(entryData.entry, "transferred", fileName);
+        }
+    } catch (error) {
+        // Show "Transfer failed ❌" status for all entries in this batch
+        for (const entryData of batch.entries) {
+            updateTransferStatusUI(entryData.entry, "failed", error.message);
+        }
+        throw error;
+    }
 }
