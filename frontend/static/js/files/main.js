@@ -118,9 +118,11 @@ $(document).ready(function () {
 
             const allResults = [];
 
+            // ###### LOOP-----------------------
             for (let b = 0; b < batches.length; b++) {
 
                 const batchEntries = batches[b];
+                let entryCounter = 1;  // ✅ AGREGAR: Contador de entradas
 
                 let zipCounter = 1;
                 let processedCount = 0;
@@ -138,8 +140,8 @@ $(document).ready(function () {
                     const entryId = sanitize(entry);
 
                     try {
-
-                        setEntryStage(entryId, "Searching...");
+                        // ✅ MODIFICADO: Pasar entryCounter
+                        setEntryStage(entryId, "Searching...", entryCounter);
 
                         // ==============================
                         // GET JSON STATUS 
@@ -167,20 +169,22 @@ $(document).ready(function () {
                         // ==============================
                         // ALREADY SUCCESS 
                         if (projectStatus === true) {
-
-                            setEntryDone(entryId);
+                            // ✅ MODIFICADO: Pasar entryCounter
+                            setEntryDone(entryId, entryCounter);
+                            entryCounter++;  // ✅ AGREGAR: Incrementar contador
                             continue;
                         }
 
                         // ==============================
                         // PREVIOUSLY FAILED 
                         if (projectStatus === false) {
-
+                            // ✅ MODIFICADO: Pasar entryCounter
                             setEntryError(
                                 entryId,
-                                "Previously failed download ❌"
+                                "Previously failed download ❌",
+                                entryCounter
                             );
-
+                            entryCounter++;  // ✅ AGREGAR: Incrementar contador
                             continue;
                         }
 
@@ -195,17 +199,18 @@ $(document).ready(function () {
                         ) {
 
                             if (entryExistsInJson) {
-
+                                // ✅ MODIFICADO: Pasar entryCounter
                                 setEntryError(
                                     entryId,
-                                    "File exists but failed in this project"
+                                    "File exists but failed in this project",
+                                    entryCounter
                                 );
-
                             } else {
-
+                                // ✅ MODIFICADO: Pasar entryCounter
                                 setEntryError(
                                     entryId,
-                                    "No file in project"
+                                    "No file in project",
+                                    entryCounter
                                 );
                             }
 
@@ -214,7 +219,7 @@ $(document).ready(function () {
                                 projectKey,
                                 false
                             );
-
+                            entryCounter++;  // ✅ AGREGAR: Incrementar contador
                             continue;
                         }
 
@@ -237,17 +242,18 @@ $(document).ready(function () {
                         if (filteredResult.length === 0) {
 
                             if (entryExistsInJson) {
-
+                                // ✅ MODIFICADO: Pasar entryCounter
                                 setEntryError(
                                     entryId,
-                                    "File exists but failed in this project"
+                                    "File exists but failed in this project",
+                                    entryCounter
                                 );
-
                             } else {
-
+                                // ✅ MODIFICADO: Pasar entryCounter
                                 setEntryError(
                                     entryId,
-                                    "No file in project"
+                                    "No file in project",
+                                    entryCounter
                                 );
                             }
 
@@ -256,7 +262,7 @@ $(document).ready(function () {
                                 projectKey,
                                 false
                             );
-
+                            entryCounter++;  // ✅ AGREGAR: Incrementar contador
                             continue;
                         }
 
@@ -266,9 +272,11 @@ $(document).ready(function () {
                             filteredResult[0].fileId ||
                             filteredResult[0].FileId;
 
+                        // ✅ MODIFICADO: Pasar entryCounter
                         setEntryStage(
                             entryId,
-                            `FileID: ${fileId}`
+                            `FileID: ${fileId}`,
+                            entryCounter
                         );
 
                         const documents =
@@ -286,9 +294,11 @@ $(document).ready(function () {
                             }))
                         );
 
+                        // ✅ MODIFICADO: Pasar entryCounter
                         setEntryStage(
                             entryId,
-                            `Documents: ${documents.length}`
+                            `Documents: ${documents.length}`,
+                            entryCounter
                         );
 
                         const folder = zip.folder(entry);
@@ -309,13 +319,15 @@ $(document).ready(function () {
                                 doc.documentId ||
                                 doc.DocumentId;
 
+                            // ✅ MODIFICADO: Pasar entryCounter
                             setEntryProgress(
                                 entryId,
                                 entry,
                                 fileId,
                                 i + 1,
                                 documents.length,
-                                documentId
+                                documentId,
+                                entryCounter
                             );
 
                             docsList.push({
@@ -339,9 +351,11 @@ $(document).ready(function () {
                             docs: docsList
                         });
 
-                        setEntryDone(entryId);
+                        // ✅ MODIFICADO: Pasar entryCounter
+                        setEntryDone(entryId, entryCounter);
 
                         processedCount++;
+                        entryCounter++;  // ✅ AGREGAR: Incrementar contador después de éxito
 
                         // ==============================
                         // ZIP EVERY 2 ENTRIES 
@@ -397,18 +411,23 @@ $(document).ready(function () {
                             err.message?.includes("Failed to fetch")
                         ) {
 
+                            // ✅ MODIFICADO: Pasar entryCounter
                             setEntryError(
                                 entryId,
-                                "Process interrupted"
+                                "Process interrupted",
+                                entryCounter
                             );
 
                             // IMPORTANT:
                             // Do NOT save false in JSON
+                            entryCounter++;  // ✅ AGREGAR: Incrementar contador
                             continue;
                         }
+                        // ✅ MODIFICADO: Pasar entryCounter
                         setEntryError(
                             entryId,
-                            "Request failed"
+                            "Request failed",
+                            entryCounter
                         );
 
                         await markEntry(
@@ -416,6 +435,7 @@ $(document).ready(function () {
                             projectKey,
                             false
                         );
+                        entryCounter++;  // ✅ AGREGAR: Incrementar contador
                     }
                 }
 
@@ -450,6 +470,8 @@ $(document).ready(function () {
                     }
                 }
             }
+
+            // ##### LOOP END -----------------------------
 
             const endTime = performance.now();
 

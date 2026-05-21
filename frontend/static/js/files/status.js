@@ -62,18 +62,20 @@ function updateDOM(id, html, rawStatus) {
 }
 
 // Sets a simple stage message (e.g. "Searching...")
-export function setEntryStage(id, msg) {
-    updateDOM(id, `<div>${msg}</div>`, {
+export function setEntryStage(id, msg, index = null) {
+    const displayMsg = index !== null ? `${index}. ${msg}` : msg;
+    updateDOM(id, `<div>${displayMsg}</div>`, {
         type: "stage",
-        msg
+        msg: displayMsg
     });
 }
 
 // Updates progress display (document processing)
-export function setEntryProgress(id, entry, fileId, current, total, docId) {
+export function setEntryProgress(id, entry, fileId, current, total, docId, index = null) {
+    const displayPrefix = index !== null ? `${index}. ` : '';
     updateDOM(id, `
         <div style="color:#3b82f6;">
-            Processing ${current}/${total}
+            ${displayPrefix}Processing ${current}/${total}
         </div>
         <div style="color:#9ca3af;">
             Doc: ${docId}
@@ -82,22 +84,26 @@ export function setEntryProgress(id, entry, fileId, current, total, docId) {
         type: "progress",
         current,
         total,
-        docId
+        docId,
+        entryIndex: index
     });
 }
 
 // Displays error message for entry
-export function setEntryError(id, msg) {
-    updateDOM(id, `<div style="color:red;">${msg}</div>`, {
+export function setEntryError(id, msg, index = null) {
+    const displayMsg = index !== null ? `${index}. ${msg}` : msg;
+    updateDOM(id, `<div style="color:red;">${displayMsg}</div>`, {
         type: "error",
-        msg
+        msg: displayMsg
     });
 }
 
 // Marks entry as completed
-export function setEntryDone(id) {
-    updateDOM(id, `<div style="color:#22c55e;">Completed ✔</div>`, {
-        type: "done"
+export function setEntryDone(id, index = null) {
+    const displayMsg = index !== null ? `Completed ✔` : "Completed ✔";
+    updateDOM(id, `<div style="color:#22c55e;">${displayMsg}</div>`, {
+        type: "done",
+        msg: displayMsg
     });
 }
 

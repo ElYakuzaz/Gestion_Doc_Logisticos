@@ -5,6 +5,7 @@
 // ------------------------------------------------------------------------------------------------------------
 
 import { updateTransferStatusUI } from "./paginacion.js";
+import { updateTransferState } from "./entryState.js";
 
 // Re-export for use in other files
 export { updateTransferStatusUI as updateTransferStatus };
@@ -20,6 +21,24 @@ export function clearTransferHistory(entryId) {
     transferHistory.delete(entryId);
 }
 
+// Update transfer status with persistence
+export function updateTransferStatusWithPersistence(entryId, status, message = "") {
+    // Guardar en entryState para que persista al cambiar de página
+    updateTransferState(entryId, status, message);
+    
+    // También actualizar la UI
+    updateTransferStatusUI(entryId, status, message);
+    
+    // Guardar en historial si es necesario
+    if (status === "transferred" || status === "failed") {
+        transferHistory.set(entryId, {
+            status,
+            message,
+            timestamp: new Date().toISOString()
+        });
+    }
+}
+
 // Listen for transfer events globally
 if (typeof window !== 'undefined') {
     window.addEventListener("transferComplete", (event) => {
@@ -29,9 +48,15 @@ if (typeof window !== 'undefined') {
         console.log(`   Duration: ${duration}s`);
         console.log(`   Remote: ${remoteDirectory}`);
         
-        // Store in history
+        // Store in history and update state for each entry
         for (const entryData of entries) {
-            transferHistory.set(entryData.entry, {
+            const entryId = entryData.entry || entryData;
+            
+            // Guardar en entryState
+            updateTransferState(entryId, "transferred", `Transferred to ${remoteDirectory}`);
+            
+            // Guardar en historial
+            transferHistory.set(entryId, {
                 status: "transferred",
                 fileName,
                 duration,
@@ -46,9 +71,15 @@ if (typeof window !== 'undefined') {
         console.error(`❌ Transfer failed for ${entries.length} entries:`, error);
         
         for (const entryData of entries) {
-            transferHistory.set(entryData.entry, {
+            const entryId = entryData.entry || entryData;
+            
+            // Guardar en entryState
+            updateTransferState(entryId, "failed", error.message || "Transfer failed");
+            
+            // Guardar en historial
+            transferHistory.set(entryId, {
                 status: "failed",
-                error,
+                error: error.message || String(error),
                 timestamp: new Date().toISOString()
             });
         }

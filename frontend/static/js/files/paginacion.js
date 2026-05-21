@@ -3,11 +3,11 @@
 // Handles pagination UI, rendering entries with status, and transfer status display
 // ------------------------------------------------------------------------------------------------------------
 
-import { getEntryState } from "./entryState.js";
-import { updateTransferStatus } from "./transferStatus.js";
+import { getRawEntryState, getTransferState, updateTransferState } from "./entryState.js";
+import { sanitize } from "./utils.js";
 
 let currentPage = 1;
-let itemsPerPage = 20;
+let itemsPerPage = 100;
 let allEntries = [];
 let totalPages = 0;
 
@@ -16,13 +16,43 @@ let currentBatchesData = [];
 
 // Escape HTML to prevent XSS
 function escapeHtml(str) {
-    if (!str) return '';
+    if (!str || typeof str !== 'string') return '';
     return str.replace(/[&<>]/g, function(m) {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
         return m;
     });
+}
+
+// Get transfer status HTML
+function getTransferStatusHTML(entryId) {
+    const transfer = getTransferState(entryId);
+    
+    if (!transfer) return '';
+    
+    switch(transfer.status) {
+        case "transferring":
+            return `
+                <div style="color:#f59e0b; font-size:11px; margin-top:6px; display:flex; align-items:center; gap:6px;">
+                    <span class="transfer-spinner"></span> Transferring to server...
+                </div>
+            `;
+        case "transferred":
+            return `
+                <div style="color:#10b981; font-size:11px; margin-top:6px; display:flex; align-items:center; gap:4px;">
+                    ✓ Transferred to server
+                </div>
+            `;
+        case "failed":
+            return `
+                <div style="color:#ef4444; font-size:11px; margin-top:6px;">
+                    ❌ Transfer failed: ${escapeHtml(transfer.message)}
+                </div>
+            `;
+        default:
+            return '';
+    }
 }
 
 // Render the entries grid with pagination
@@ -48,18 +78,25 @@ export function renderEntries(entries, page = currentPage) {
         <div class="entries-grid">
     `;
     
-    for (const entry of pageEntries) {
-        const entryId = escapeHtml(entry);
-        const state = getEntryState(entryId);
+    for (let idx = 0; idx < pageEntries.length; idx++) {
+        const entry = pageEntries[idx];
+        const entryStr = String(entry);
+        const sanitizedId = sanitize(entryStr);
+        const entryIdDisplay = escapeHtml(entryStr);
+        const globalIndex = start + idx + 1;
+        const state = getRawEntryState(sanitizedId);
+        const transferHtml = getTransferStatusHTML(sanitizedId);
         
         let statusHtml = '';
+        
         if (state) {
             if (state.type === "stage") {
                 statusHtml = `<div>${escapeHtml(state.msg)}</div>`;
             } else if (state.type === "progress") {
+                const displayPrefix = state.entryIndex ? `${state.entryIndex}. ` : '';
                 statusHtml = `
                     <div style="color:#3b82f6;">
-                        Processing ${state.current}/${state.total}
+                        ${displayPrefix}Processing ${state.current}/${state.total}
                     </div>
                     <div style="color:#9ca3af; font-size: 11px;">
                         Doc: ${escapeHtml(state.docId)}
@@ -68,7 +105,7 @@ export function renderEntries(entries, page = currentPage) {
             } else if (state.type === "error") {
                 statusHtml = `<div style="color:#ef4444;">${escapeHtml(state.msg)}</div>`;
             } else if (state.type === "done") {
-                statusHtml = `<div style="color:#10b981;">Completed ✔</div>`;
+                statusHtml = `<div style="color:#10b981;">${escapeHtml(state.msg) || 'Completed ✔'}</div>`;
             } else {
                 statusHtml = `<div style="color:#64748b;">Waiting...</div>`;
             }
@@ -77,13 +114,13 @@ export function renderEntries(entries, page = currentPage) {
         }
         
         html += `
-            <div class="entry" id="entry-${entryId}">
-                <b>Entry:  ${entryId}</b>
+            <div class="entry" id="entry-${sanitizedId}">
+                <b>${globalIndex}. Entry: ${entryIdDisplay}</b>
                 <div class="status">
                     ${statusHtml}
                 </div>
-                <div class="transfer-status" id="transfer-${entryId}">
-                    <!-- Transfer status will appear here -->
+                <div class="transfer-status" id="transfer-${sanitizedId}">
+                    ${transferHtml}
                 </div>
             </div>
         `;
@@ -100,7 +137,6 @@ export function renderEntries(entries, page = currentPage) {
     
     container.html(html);
     
-    // Re-attach pagination event handlers
     $("#prevPageBtn").off("click").on("click", function() {
         if (currentPage > 1) {
             goToPage(currentPage - 1);
@@ -116,12 +152,12 @@ export function renderEntries(entries, page = currentPage) {
 
 // Initialize pagination with batch data
 export function initPagination(batches) {
-    // Flatten batches array to get all unique entries
     const allEntryIds = [];
     for (const batch of batches) {
         for (const entry of batch) {
-            if (!allEntryIds.includes(entry)) {
-                allEntryIds.push(entry);
+            const entryStr = String(entry);
+            if (!allEntryIds.includes(entryStr)) {
+                allEntryIds.push(entryStr);
             }
         }
     }
@@ -131,8 +167,6 @@ export function initPagination(batches) {
     currentPage = 1;
     
     renderEntries(allEntries, currentPage);
-    
-    // Store batches data for potential re-use
     currentBatchesData = batches;
 }
 
@@ -143,7 +177,7 @@ export function goToPage(page) {
     renderEntries(allEntries, currentPage);
 }
 
-// Refresh the current page (useful after status updates)
+// Refresh the current page
 export function refreshPagination() {
     if (allEntries.length > 0) {
         renderEntries(allEntries, currentPage);
@@ -154,16 +188,18 @@ export function refreshPagination() {
 export function updateSingleEntry(entryId) {
     const entryCard = $(`#entry-${entryId}`);
     if (entryCard.length) {
-        const state = getEntryState(entryId);
+        const state = getRawEntryState(entryId);
         const statusDiv = entryCard.find('.status');
+        const transferHtml = getTransferStatusHTML(entryId);
         
         if (state) {
             if (state.type === "stage") {
                 statusDiv.html(`<div>${escapeHtml(state.msg)}</div>`);
             } else if (state.type === "progress") {
+                const displayPrefix = state.entryIndex ? `${state.entryIndex}. ` : '';
                 statusDiv.html(`
                     <div style="color:#3b82f6;">
-                        Processing ${state.current}/${state.total}
+                        ${displayPrefix}Processing ${state.current}/${state.total}
                     </div>
                     <div style="color:#9ca3af; font-size: 11px;">
                         Doc: ${escapeHtml(state.docId)}
@@ -172,14 +208,24 @@ export function updateSingleEntry(entryId) {
             } else if (state.type === "error") {
                 statusDiv.html(`<div style="color:#ef4444;">${escapeHtml(state.msg)}</div>`);
             } else if (state.type === "done") {
-                statusDiv.html(`<div style="color:#10b981;">Completed ✔</div>`);
+                statusDiv.html(`<div style="color:#10b981;">${escapeHtml(state.msg) || 'Completed ✔'}</div>`);
             }
+        }
+        
+        // Update transfer status
+        const transferDiv = entryCard.find('.transfer-status');
+        if (transferDiv.length) {
+            transferDiv.html(transferHtml);
         }
     }
 }
 
 // Update transfer status for a specific entry in the UI
 export function updateTransferStatusUI(entryId, status, message = "") {
+    // Guardar en entryState para persistencia
+    updateTransferState(entryId, status, message);
+    
+    // Buscar el elemento en el DOM
     const transferDiv = $(`#transfer-${entryId}`);
     
     if (transferDiv.length) {
@@ -196,7 +242,7 @@ export function updateTransferStatusUI(entryId, status, message = "") {
             case "transferred":
                 html = `
                     <div style="color:#10b981; font-size:11px; margin-top:6px; display:flex; align-items:center; gap:4px;">
-                        <span>✓</span> Transferred to server
+                        ✓ Transferred to server
                     </div>
                 `;
                 break;

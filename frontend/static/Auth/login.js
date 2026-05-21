@@ -40,8 +40,9 @@ function updateLoginUI() {
                         font-weight:500;
                         margin-right:10px;
                         margin-top:5.5px;
+                        color: white;
                     ">
-                    ✓ Logged In
+                    ✓ Logged in
                 </span>
             `);
         }
