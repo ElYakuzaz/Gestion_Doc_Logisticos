@@ -267,8 +267,9 @@ input[type="checkbox"] {
    TIMER
 ========================= */
 .timer {
-    margin-top: 24px;
-    padding: 8px 16px;
+    /* margin-top: 100px; */
+    margin-bottom: 20px;
+    padding: 8px 8px;
     background: #f1f5f9;
     border: 1px solid var(--border-light);
     display: inline-flex;
@@ -422,7 +423,7 @@ input[type="checkbox"] {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    margin-bottom: 24px;
+    /* margin-bottom: 10px; */
 }
 
 /* Loading animation */
@@ -500,6 +501,118 @@ hr {
 }
 
 /* =========================
+   NEW FILTER & STATS PANEL STYLES
+========================= */
+.filter-stats-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-radius: 0;
+}
+
+.stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.stat-card {
+    flex: 1;
+    min-width: 100px;
+    background: #f8fafc;
+    padding: 12px 16px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+    transition: var(--transition-smooth);
+}
+
+.stat-card:hover {
+    border-color: var(--accent-primary);
+    background: white;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filter-btn {
+    padding: 6px 16px;
+    background: #f1f5f9;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    border-radius: 0;
+}
+
+.filter-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.filter-btn:hover:not(.active) {
+    background: #e2e8f0;
+    border-color: var(--accent-primary);
+}
+
+.sort-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.sort-option label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+/* Transfer spinner */
+.transfer-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #f59e0b;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =========================
    RESPONSIVE DESIGN
 ========================= */
 @media (max-width: 1200px) {
@@ -524,6 +637,17 @@ hr {
     
     .navbar {
         padding: 12px 20px;
+    }
+
+    .filter-buttons {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .sort-option {
+        margin-left: 0;
+        margin-top: 10px;
     }
 }
 
@@ -568,3 +692,16 @@ hr {
     outline: none;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
+
+/* ----------------------- */
+/* Pagination top margin */
+#pagination-top {
+    margin-bottom: 20px;
+}
+
+#pagination-bottom {
+    margin-top: 20px;
+}
+
+/*-------------- BARRA DE BUSQUEDA --------------*/
+ 

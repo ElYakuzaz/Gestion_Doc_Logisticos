@@ -1,6 +1,7 @@
 // ------------------------------------------------------------------------------------------------------------
 // Updates entry status in UI (stage, progress, error, done).
 // Syncs DOM updates with internal state without full page refresh.
+// Now only updates the specific entry and stats, never triggers full grid re-render.
 // ------------------------------------------------------------------------------------------------------------
 
 import { updateEntryState } from "./entryState.js";
@@ -9,34 +10,59 @@ import { updateEntryState } from "./entryState.js";
 let pendingUpdates = new Map();
 let updateScheduled = false;
 
-// Direct DOM update without pagination refresh
-function updateDOMDirect(id, html, rawStatus) {
-    // Find the status element for this specific entry
-    const statusEl = $(`#entry-${id} .status`);
-    
-    if (statusEl.length) {
-        // Update just this entry's status without touching anything else
-        statusEl.html(html);
-    }
+// Helper to get current status type for change detection
+function getStatusTypeFromState(state) {
+    if (!state) return "pending";
+    if (state.type === "done") return "completed";
+    if (state.type === "error") return "failed";
+    if (state.type === "stage" || state.type === "progress") return "processing";
+    return "pending";
+}
+
+// Update a single entry and notify about type change if needed
+function updateEntryAndNotify(id, rawStatus) {
+    const oldState = window.getRawEntryState ? window.getRawEntryState(id) : null;
+    const oldType = getStatusTypeFromState(oldState);
+    const newType = getStatusTypeFromState(rawStatus);
     
     // Update memory state
-    updateEntryState(id, rawStatus, true); // skip UI update to avoid recursion
+    updateEntryState(id, rawStatus, true);
+    
+    // Update UI in place
+    if (window.updateSingleEntry) {
+        window.updateSingleEntry(id);
+    }
+    
+    // Update stats panel (counts may change)
+    if (window.updateStatsOnly) {
+        window.updateStatsOnly();
+    }
+    
+    // If type changed and we have a callback, notify
+    if (oldType !== newType && window.onStatusTypeChange) {
+        window.onStatusTypeChange(id, oldType, newType);
+    }
+}
+
+// Direct DOM update without pagination refresh
+function updateDOMDirect(id, html, rawStatus) {
+    const statusEl = $(`#entry-${id} .status`);
+    if (statusEl.length) {
+        statusEl.html(html);
+    }
+    updateEntryAndNotify(id, rawStatus);
 }
 
 // Batch multiple updates that happen in the same frame
 function scheduleUpdate(id, html, rawStatus) {
     pendingUpdates.set(id, { html, rawStatus });
-    
     if (!updateScheduled) {
         updateScheduled = true;
         requestAnimationFrame(() => {
-            // Apply all pending updates at once
             for (const [entryId, data] of pendingUpdates) {
                 const statusEl = $(`#entry-${entryId} .status`);
-                if (statusEl.length) {
-                    statusEl.html(data.html);
-                }
-                updateEntryState(entryId, data.rawStatus, true);
+                if (statusEl.length) statusEl.html(data.html);
+                updateEntryAndNotify(entryId, data.rawStatus);
             }
             pendingUpdates.clear();
             updateScheduled = false;
@@ -44,24 +70,16 @@ function scheduleUpdate(id, html, rawStatus) {
     }
 }
 
-// Updates DOM + internal state for an entry (optimized)
 function updateDOM(id, html, rawStatus) {
-    // Direct update without any pagination refresh
-    // This preserves hover states because we're not replacing parent elements
     const statusEl = $(`#entry-${id} .status`);
-    
     if (statusEl.length) {
         statusEl.html(html);
+        updateEntryAndNotify(id, rawStatus);
     } else {
-        // If element doesn't exist yet, use the scheduled approach
         scheduleUpdate(id, html, rawStatus);
     }
-    
-    // Update memory state (skip UI refresh to prevent loops)
-    updateEntryState(id, rawStatus, true);
 }
 
-// Sets a simple stage message (e.g. "Searching...")
 export function setEntryStage(id, msg, index = null) {
     const displayMsg = index !== null ? `${index}. ${msg}` : msg;
     updateDOM(id, `<div>${displayMsg}</div>`, {
@@ -70,7 +88,6 @@ export function setEntryStage(id, msg, index = null) {
     });
 }
 
-// Updates progress display (document processing)
 export function setEntryProgress(id, entry, fileId, current, total, docId, index = null) {
     const displayPrefix = index !== null ? `${index}. ` : '';
     updateDOM(id, `
@@ -89,7 +106,6 @@ export function setEntryProgress(id, entry, fileId, current, total, docId, index
     });
 }
 
-// Displays error message for entry
 export function setEntryError(id, msg, index = null) {
     const displayMsg = index !== null ? `${index}. ${msg}` : msg;
     updateDOM(id, `<div style="color:red;">${displayMsg}</div>`, {
@@ -98,7 +114,6 @@ export function setEntryError(id, msg, index = null) {
     });
 }
 
-// Marks entry as completed
 export function setEntryDone(id, index = null) {
     const displayMsg = index !== null ? `Completed ✔` : "Completed ✔";
     updateDOM(id, `<div style="color:#22c55e;">${displayMsg}</div>`, {
@@ -107,10 +122,10 @@ export function setEntryDone(id, index = null) {
     });
 }
 
-// Optional: Force a full refresh only when needed (e.g., page change)
+// Forced full refresh – now only updates stats and ensures UI consistency (rarely needed)
 export function forceFullRefresh() {
-    // This would only be called when changing pages, not during updates
-    if (typeof refreshPagination !== 'undefined') {
-        refreshPagination();
+    if (window.updateStatsOnly) window.updateStatsOnly();
+    if (window.updateSingleEntry && typeof window.updateAllEntries === 'undefined') {
+        // Optionally refresh only visible entries
     }
 }
