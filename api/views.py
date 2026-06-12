@@ -10,6 +10,8 @@ import paramiko
 import tempfile
 import time #para pruebas de tiempo de envio de archivos
 from datetime import datetime, timedelta
+from django.shortcuts import render  # ← Agrega esta línea
+
 
 # folder_name = (datetime.now() + timedelta(days=2)).strftime("%Y%m%d") #to obtain 2 dias en avance, si hoy es 5/14, el folder sera 5/16
 load_dotenv()
@@ -339,3 +341,110 @@ def save_zip(request):
 #         "success": True,
 #         "path": file_path
 #     })
+
+
+# ========================================================== COSAS PARA ENVIOS DE ARCHIVOS LOCALMENTE =========================
+# ---------------------------------------------  LOCAL EXPORT MODE -------------------------------------------------
+# # RENDER LOCAL EXPORT PAGE
+# def local_export(request):
+#     """Render the local export page"""
+#     return render(request, 'local_export.html')
+
+# SAVE ZIP TO LOCAL DIRECTORY (for local export mode - NO JSON tracking)
+
+
+@csrf_exempt
+def save_zip_local(request):
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    uploaded_file = request.FILES.get("file")
+    entry = request.POST.get("entry")
+    local_directory = request.POST.get("local_directory")
+
+    if not uploaded_file:
+        return JsonResponse({"error": "No file received"}, status=400)
+
+    if not entry:
+        return JsonResponse({"error": "No entry provided"}, status=400)
+
+    if not local_directory:
+        return JsonResponse({"error": "No local directory provided"}, status=400)
+
+    # Create full directory path: base/entry/ (sin folder_date)
+    save_directory = os.path.join(local_directory, entry)
+    
+    try:
+        os.makedirs(save_directory, exist_ok=True)
+        
+        # Save the zip file
+        zip_name = f"{entry}.zip"
+        zip_path = os.path.join(save_directory, zip_name)
+        
+        with open(zip_path, "wb+") as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        
+        # Extract zip contents
+        extract_dir = os.path.join(save_directory, "_extracted_temp")
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        # Move files from extracted folder
+        extracted_entry_folder = os.path.join(extract_dir, entry)
+        
+        if os.path.exists(extracted_entry_folder):
+            for root, dirs, files in os.walk(extracted_entry_folder):
+                for file in files:
+                    src_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(src_path, extracted_entry_folder)
+                    dst_path = os.path.join(save_directory, rel_path)
+                    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                    
+                    if os.path.exists(dst_path):
+                        base, ext = os.path.splitext(file)
+                        counter = 1
+                        while os.path.exists(dst_path):
+                            dst_path = os.path.join(save_directory, f"{base}_{counter}{ext}")
+                            counter += 1
+                    
+                    shutil.move(src_path, dst_path)
+        else:
+            for root, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    src_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(src_path, extract_dir)
+                    dst_path = os.path.join(save_directory, rel_path)
+                    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                    
+                    if os.path.exists(dst_path):
+                        base, ext = os.path.splitext(file)
+                        counter = 1
+                        while os.path.exists(dst_path):
+                            dst_path = os.path.join(save_directory, f"{base}_{counter}{ext}")
+                            counter += 1
+                    
+                    shutil.move(src_path, dst_path)
+        
+        # Clean up
+        shutil.rmtree(extract_dir, ignore_errors=True)
+        os.remove(zip_path)
+        
+        print(f"✅ Local export saved: {entry} → {save_directory}")
+        
+        return JsonResponse({
+            "success": True,
+            "path": save_directory,
+            "entry": entry
+        })
+        
+    except Exception as e:
+        print(f"❌ Error saving local export for {entry}: {str(e)}")
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)  
+        

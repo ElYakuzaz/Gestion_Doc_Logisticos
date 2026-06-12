@@ -28,14 +28,45 @@ export async function searchByEntry(entryValue) {
  * @param {string} fileId
  */
 export async function getDocumentsByFile(fileId) {
-
     const guid = localStorage.getItem("loginGuid");
 
-    return $.ajax({
+    const result = await $.ajax({
         url: `${data.baseUrl}/files/${fileId}/documents`,
         type: "GET",
         data: { guid }
     });
+    
+    // === VER METADATA DE DOCUMENTOS ===
+    console.group(`📋 METADATA DE DOCUMENTOS - FileId: ${fileId}`);
+    console.log("Documentos encontrados:", result.length);
+    
+    result.forEach((doc, index) => {
+        console.group(`Documento ${index + 1}: ${doc.documentId || doc.DocumentId}`);
+        console.log("Todas las propiedades:", Object.keys(doc));
+        console.log("Metadata completa:", doc);
+        
+        // Mostrar campos específicos importantes
+        const importantFields = [
+            'documentId', 'DocumentId', 
+            'divider', 'type', 'documentType',
+            'sortOrder', 'sortorder',
+            'name', 'fileName', 'title',
+            'dateCreated', 'createdDate',
+            'pageCount', 'pages',
+            'status', 'description'
+        ];
+        
+        importantFields.forEach(field => {
+            if (doc[field] !== undefined) {
+                console.log(`  ${field}:`, doc[field]);
+            }
+        });
+        console.groupEnd();
+    });
+    
+    console.groupEnd();
+    
+    return result;
 }
 
 /**

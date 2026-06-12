@@ -1,6 +1,11 @@
 /* =========================
-   MODERN SHARP THEME - DARK NAVBAR, CRISP EDGES
+   LOCAL EXPORT SPECIFIC STYLES
+   Extended from base index.css
 ========================= */
+
+/* Import all base styles from index.css */
+/* (These styles are already in your index.css) */
+
 :root {
     --bg-gradient-start: #f1f5f9;
     --bg-gradient-end: #e2e8f0;
@@ -92,6 +97,32 @@ body {
     font-weight: 600;
     color: #f1f5f9;
     letter-spacing: -0.3px;
+}
+
+/* Navbar with center links */
+.navbar-center {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.nav-link {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    transition: var(--transition-smooth);
+}
+
+.nav-link:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+    color: white;
+    border-bottom: 2px solid var(--accent-primary);
 }
 
 /* Navbar Buttons */
@@ -267,9 +298,8 @@ input[type="checkbox"] {
    TIMER
 ========================= */
 .timer {
-    /* margin-top: 100px; */
     margin-bottom: 20px;
-    padding: 8px 8px;
+    padding: 8px 16px;
     background: #f1f5f9;
     border: 1px solid var(--border-light);
     display: inline-flex;
@@ -296,8 +326,222 @@ input[type="checkbox"] {
 }
 
 /* =========================
-   PAGINATION
+   TOP 2-COLUMN ROW
 ========================= */
+.top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+@media (max-width: 900px) {
+    .top-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .container {
+        padding: 0 20px;
+    }
+    
+    .navbar {
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .card {
+        padding: 18px;
+    }
+    
+    h2 {
+        font-size: 24px;
+    }
+    
+    .file-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Additional sharp styling for date input */
+#folderDate {
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    background: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    border-radius: 0;
+    transition: var(--transition-smooth);
+}
+
+#folderDate:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================
+   LOCAL EXPORT SPECIFIC STYLES
+========================= */
+
+/* Directory input wrapper */
+.directory-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.directory-wrapper input {
+    flex: 1;
+    background: white;
+    font-size: 13px;
+}
+
+.browse-btn {
+    padding: 10px 18px;
+    background: #f1f5f9;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    white-space: nowrap;
+    border-radius: 0;
+}
+
+.browse-btn:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+/* Document Checklist */
+.document-checklist {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    background: #fafcff;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid var(--border-light);
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.checklist-item:hover {
+    background: #f1f5f9;
+    border-color: var(--accent-primary);
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent-primary);
+    margin: 0;
+}
+
+.checklist-item label {
+    flex: 1;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.checklist-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.checklist-btn {
+    padding: 6px 14px;
+    background: #f1f5f9;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    border-radius: 0;
+}
+
+.checklist-btn:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.loading-checklist {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+/* Entries grid for local export (reusing same styles) */
+.entries-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.entry {
+    background: #ffffff;
+    padding: 14px;
+    border: 1px solid var(--border-light);
+    transition: var(--transition-smooth);
+    position: relative;
+    border-radius: 0;
+}
+
+.entry:hover {
+    border-color: var(--accent-primary);
+    background: #fafcff;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.entry b {
+    font-size: 13px;
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.status {
+    font-size: 12px;
+    margin-top: 8px;
+    color: var(--text-muted);
+}
+
+/* Pagination */
 .pagination {
     display: flex;
     justify-content: center;
@@ -336,173 +580,7 @@ input[type="checkbox"] {
     color: var(--text-secondary);
 }
 
-/* =========================
-   ENTRIES GRID
-========================= */
-.entries-grid {
-    display: grid;
-    /* grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); */
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
-    margin-top: 20px;
-}
-
-.entry {
-    background: #ffffff;
-    padding: 14px;
-    border: 1px solid var(--border-light);
-    transition: var(--transition-smooth);
-    position: relative;
-    border-radius: 0;
-}
-
-.entry:hover {
-    border-color: var(--accent-primary);
-    background: #fafcff;
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
-}
-
-.entry b {
-    font-size: 13px;
-    display: block;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-}
-
-.status {
-    font-size: 12px;
-    margin-top: 8px;
-    color: var(--text-muted);
-}
-
-/* Status colors */
-.status div[style*="color:#3b82f6"] {
-    color: var(--accent-primary) !important;
-}
-
-.status div[style*="color:#22c55e"] {
-    color: var(--accent-secondary) !important;
-}
-
-.status div[style*="color:red"] {
-    color: var(--accent-danger) !important;
-}
-
-.status div[style*="color:#9ca3af"] {
-    color: var(--text-muted) !important;
-}
-
-/* =========================
-   BATCH RESULTS (Legacy support)
-========================= */
-.batch {
-    border: 1px solid var(--border-light);
-    padding: 16px;
-    margin-bottom: 16px;
-    background: #ffffff;
-    transition: var(--transition-smooth);
-    border-radius: 0;
-}
-
-.batch:hover {
-    border-color: var(--accent-primary);
-    background: #fafcff;
-}
-
-.batch h3 {
-    font-size: 15px;
-    margin-bottom: 12px;
-    color: var(--text-secondary);
-}
-
-/* =========================
-   TOP 2-COLUMN ROW
-========================= */
-.top-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    /* margin-bottom: 10px; */
-}
-
-/* Loading animation */
-@keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-}
-
-.loading {
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* =========================
-   ADDITIONAL UI ENHANCEMENTS
-========================= */
-
-/* Progress bars or status indicators */
-.status .progress-bar {
-    background: #e2e8f0;
-    height: 4px;
-    margin-top: 8px;
-    overflow: hidden;
-    border-radius: 0;
-}
-
-.status .progress-fill {
-    background: var(--accent-primary);
-    height: 100%;
-    transition: width 0.3s ease;
-    border-radius: 0;
-}
-
-/* Subtle divider */
-hr {
-    border: none;
-    border-top: 1px solid var(--border-light);
-    margin: 16px 0;
-}
-
-/* Info/warning/error badges */
-.badge-info {
-    background: #dbeafe;
-    color: #1e40af;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    border-radius: 0;
-}
-
-.badge-success {
-    background: #d1fae5;
-    color: #065f46;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    border-radius: 0;
-}
-
-.badge-warning {
-    background: #fed7aa;
-    color: #92400e;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    border-radius: 0;
-}
-
-.badge-error {
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    border-radius: 0;
-}
-
-/* =========================
-   NEW FILTER & STATS PANEL STYLES
-========================= */
+/* Filter & Stats Panel */
 .filter-stats-panel {
     background: var(--card-bg);
     border: 1px solid var(--border-light);
@@ -612,9 +690,16 @@ hr {
     100% { transform: rotate(360deg); }
 }
 
-/* =========================
-   RESPONSIVE DESIGN
-========================= */
+/* Pagination top/bottom margins */
+#pagination-top {
+    margin-bottom: 20px;
+}
+
+#pagination-bottom {
+    margin-top: 20px;
+}
+
+/* Responsive adjustments for local export */
 @media (max-width: 1200px) {
     .entries-grid { 
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
@@ -622,23 +707,10 @@ hr {
 }
 
 @media (max-width: 900px) {
-    .top-row {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
     .entries-grid { 
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
     }
     
-    .container {
-        padding: 0 20px;
-    }
-    
-    .navbar {
-        padding: 12px 20px;
-    }
-
     .filter-buttons {
         margin-left: 0;
         width: 100%;
@@ -649,87 +721,31 @@ hr {
         margin-left: 0;
         margin-top: 10px;
     }
+    
+    .document-checklist {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+    
+    .directory-wrapper {
+        flex-direction: column;
+    }
+    
+    .browse-btn {
+        width: 100%;
+    }
+    
+    .navbar-center {
+        gap: 12px;
+    }
+    
+    .nav-link {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
 }
 
 @media (max-width: 600px) {
     .entries-grid { 
         grid-template-columns: 1fr; 
     }
-    
-    .card {
-        padding: 18px;
-    }
-    
-    h2 {
-        font-size: 24px;
-    }
-    
-    .file-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
-/* Focus visible for accessibility */
-:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-/* Additional sharp styling for date input */
-#folderDate {
-    padding: 10px 12px;
-    border: 1px solid var(--border-light);
-    background: #ffffff;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    border-radius: 0;
-    transition: var(--transition-smooth);
-}
-
-#folderDate:focus {
-    border-color: var(--accent-primary);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
-
-/* ----------------------- */
-/* Pagination top margin */
-#pagination-top {
-    margin-bottom: 20px;
-}
-
-#pagination-bottom {
-    margin-top: 20px;
-}
-
-/*-------------- BARRA DE BUSQUEDA --------------*/
- 
-
-/* COSAS PARA EL CSS DEL NAVBAR NUEVOS
- */
- /* Navbar with center links */
-.navbar-center {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-}
-
-.nav-link {
-    color: #cbd5e1;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 12px;
-    transition: var(--transition-smooth);
-}
-
-.nav-link:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.nav-link.active {
-    color: white;
-    border-bottom: 2px solid var(--accent-primary);
 }

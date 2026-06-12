@@ -1,8 +1,7 @@
 <!-- 
-  Main UI for FileBound Batch Export tool.
-  Includes login, project selection, file upload,
-  batch processing trigger, and output display.
-  Updated with modern sharp UI structure.
+  Local Export Mode - FileBound Batch Export tool
+  Allows custom document selection and local directory saving
+  NO DATE REQUIRED - saves directly to destination directory
 -->
 
 {% load static %}
@@ -12,7 +11,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FileBound Batch Export | Sharp Export Tool</title>
+<title>FileBound Local Export | Custom Document Selector</title>
 
 <!-- Google Fonts + Inter Font -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
@@ -25,29 +24,19 @@
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
 
-<link rel="stylesheet" href="{% static 'css/index.css' %}">
+<link rel="stylesheet" href="{% static 'css/local_export.css' %}">
 <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3C/svg%3E">
 </head>
 <body>
 
-<!-- Modern dark navbar with sharp edges -->
-{% comment %} <div class="navbar">
-    <div class="navbar-left">
-        <b>FileBound Batch Export</b>
-    </div>
-    <div class="navbar-right">
-        <button id="loadBtn" aria-label="Login to your account">Login</button>
-        <button id="clearBtn" aria-label="Logout from current session">Logout</button>
-    </div>
-</div> {% endcomment %}
 <!-- Modern dark navbar with sharp edges -->
 <div class="navbar">
     <div class="navbar-left">
         <b>FileBound Batch Export</b>
     </div>
     <div class="navbar-center">
-        <a href="/" class="nav-link active">Batch Export</a>
-        <a href="/local-export/" class="nav-link">Local Export</a>
+        <a href="/" class="nav-link">Batch Export</a>
+        <a href="/local-export/" class="nav-link active">Local Export</a>
     </div>
     <div class="navbar-right">
         <button id="loadBtn" aria-label="Login to your account">Login</button>
@@ -55,11 +44,10 @@
     </div>
 </div>
 
-
 <div class="container">
-    <h2>Batch Processing Dashboard</h2>
+    <h2>Local Export Dashboard</h2>
     <div class="subtitle">
-        Select your project and upload entry file to begin batch export
+        Select documents to export and choose local directory destination
     </div>
 
     <!-- TOP ROW - Two cards side by side -->
@@ -77,7 +65,7 @@
             </div>
         </div>
 
-        <!-- ENTRY FILE + FOLDER DATE CARD (combined) -->
+        <!-- ENTRY FILE + LOCAL DIRECTORY CARD (combined - NO DATE NEEDED) -->
         <div class="card">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <!-- Left side: File Upload -->
@@ -92,26 +80,44 @@
                     </div>
                 </div>
 
-                <!-- Right side: Folder Date -->
+                <!-- Right side: Local Directory Destination -->
                 <div>
-                    <label>Folder Date</label>
-                    <input
-                        type="date"
-                        id="folderDate"
-                        style="margin-top: 12px; width: 100%;cursor: pointer;"
-                    >
+                    <label>Local Directory Destination</label>
+                    <div class="directory-wrapper" style="margin-top: 12px;">
+                        <input 
+                            type="text" 
+                            id="localDirectory" 
+                            placeholder="C:\Users\YourName\Documents\Exports\" 
+                            style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-light); font-family: monospace;"
+                        >
+                        {% comment %} <button id="browseDirectoryBtn" type="button" class="browse-btn">Browse</button> {% endcomment %}
+                    </div>
+                    {% comment %} <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                        Files will be saved to: <span id="directoryPreview">(not selected)</span>
+                    </div> {% endcomment %}
                 </div>
             </div>
 
             <!-- Action buttons row -->
             <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light);">
-                <button id="groupsBtn" aria-label="Start batch search">Search Entry File</button>
-
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="zipToggle" checked>
-                    <span>Zip download?</span>
-                </label>
+                <button id="groupsBtn" aria-label="Start batch search">Search & Export</button>
             </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT CHECKLIST SECTION -->
+    <div class="card">
+        <label>Select Documents to Export</label>
+        <div class="checklist-header">
+            <button id="selectAllBtn" class="checklist-btn">Select All</button>
+            <button id="deselectAllBtn" class="checklist-btn">Deselect All</button>
+        </div>
+        <div id="documentChecklist" class="document-checklist">
+            <!-- Dynamic checklist will be populated here -->
+            <div class="loading-checklist">Loading document types...</div>
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+            Only selected documents will be processed and exported
         </div>
     </div>
 
@@ -120,13 +126,14 @@
         Time: 0m 0s
     </div>
     
-    <!-- NEW: FILTER & STATS PANEL (populated by paginacion.js) -->
+    <!-- FILTER & STATS PANEL -->
     <div id="filterStatsPanel"></div>
     <br>
+    
     <!-- OUTPUT SECTION (entries grid + pagination) -->
     <div id="output" aria-live="polite">
         <div style="display: flex; justify-content: center; align-items: center; min-height: 150px; color: var(--text-muted);">
-            Ready to process — select a file and click Search
+            Ready to process — select a file, choose documents, and click Search & Export
         </div>
     </div>
 </div>
@@ -134,8 +141,7 @@
 <!-- Scripts -->
 <script src="{% static 'global/key.js' %}"></script>
 <script src="{% static 'Auth/login.js' %}"></script>
-<script type="module" src="{% static 'js/files/main.js' %}"></script>
-<script src="{% static 'js/app_demo.js' %}"></script>
+<script type="module" src="{% static 'js/files/local_main.js' %}"></script>
 
 </body>
 </html>

@@ -94,7 +94,9 @@ function login() {
 
             // SAVE LOGIN
             localStorage.setItem("loginGuid", loginGuid);
-
+            print("HERE TOKEN =======================")
+            Print(loginGuid);
+            
             console.log("Stored loginGuid:", loginGuid);
 
             $("#output").html(`

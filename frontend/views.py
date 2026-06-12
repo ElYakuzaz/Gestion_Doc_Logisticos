@@ -11,3 +11,8 @@ def test_api(request):
     return JsonResponse({
         "message": result
     })
+
+# VISTA LOCAL
+def local_export(request):
+    """Render the local export page"""
+    return render(request, 'local_export.html')  
